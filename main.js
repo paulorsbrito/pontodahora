@@ -83,7 +83,7 @@ const getPainelHTML = () => {
     return ` <div id='painelPontoDaHora' class='PontoDaHora'> 
              <table>               
                <tr>      
-                  <td>Saída:</td><td>${saidaPrevista}</td>                  
+                  <td>Saída!:</td><td>${saidaPrevista}</td>                  
                 </tr>  
                 <tr>
                   <td>Limite:</td><td>${saidaLimite}</td>
@@ -196,7 +196,13 @@ const getHoraSaida = (dados) => {
 
     let ent3 = getValor(dados, hoje, "Ent. 3");
     let sai3 = getValor(dados, hoje, "Saí. 3");
-    if (ent1 && (ent1 != null) && (ent1.trim().toUpperCase() == "FERIADO")) {
+
+    let ignorar = 
+      (ent1 && (ent1 != null) && (ent1.trim().toUpperCase() == "FERIADO")) ||
+      (sai2 && !ent3) || 
+      (sai3 )
+
+    if (ignorar) {
         dadosRetorno.dataSaida = "00:00";
         dadosRetorno.dataLimite = "00:00";
         return dadosRetorno;
@@ -234,6 +240,10 @@ const getHoraSaida = (dados) => {
     dataHoraSaida = menorEntrada.addMinutes(cargaHorariaMinutos);
     dataHoraSaida = dataHoraSaida.addMinutes(somaMinutosIntervalo);
 
+    // Adiciona mínimo de horário de almoço
+    if (sai1 && !ent2)
+       dataHoraSaida = dataHoraSaida.addHours(1)
+
     let dataLimite = dataHoraSaida.addMinutes(minutosLimiteAcimadaCarga);
 
     if (hoje.getDay() == 5) {
@@ -264,6 +274,9 @@ const getBancoHoras = async () => {
     let urlBancoHoras = `https://www.secullum.com.br/Ponto4Web-0/api/1185328083/CartaoPonto?funcionarioId=${idFuncionario}&periodoId=${idPeriodoAtual}`
     await fetch(urlBancoHoras, dadosReq).then(resp => resp.json()).then(resp => dados = resp).catch(resolve => console.log(resolve));;
 
+    console.log({dados})
+
+    dados.linhas[30][4].conteudo = ''
 
     let hoje = new Date();
     saldoGeral = getValor(dados, hoje.addDays(-1), "BSaldo");
